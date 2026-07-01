@@ -12,7 +12,25 @@ npm run dev       # سرور توسعه
 npm run build     # بیلد production در dist/
 npm run preview   # پیش‌نمایش بیلد production
 npm run lint      # oxlint
+npm run deploy    # بیلد + دیپلوی مستقیم روی Cloudflare Pages (نیاز به‌ `wrangler login`)
 ```
+
+## میزبانی روی Cloudflare Pages
+
+این پروژه یک اپ کاملاً استاتیک (Vite) است و بدون هیچ تنظیم اضافه‌ای روی Cloudflare Pages بالا می‌آید:
+
+- **Build command:** `npm run build`
+- **Build output directory:** `dist`
+- تنظیمات هدر کش (`public/_headers`) و فایل `wrangler.toml` (نام پروژه + مسیر خروجی) از قبل در ریپو موجودند.
+
+دو روش برای دیپلوی:
+
+1. **از طریق داشبورد Cloudflare Pages:** ریپو را متصل کنید و مقادیر بالا را برای Build command/Output directory وارد کنید.
+2. **از طریق CLI:**
+   ```bash
+   npx wrangler login   # یک‌بار، برای اتصال به اکانت کلودفلر
+   npm run deploy
+   ```
 
 ## تکنولوژی
 
