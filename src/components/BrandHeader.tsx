@@ -90,7 +90,7 @@ export function BrandHeader() {
         <div className="brand-logo-wrap" style={{ width: 50, height: 50, flex: "none", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <ScaleIcon />
         </div>
-        <div style={{ textAlign: "center" }}>
+        <div className="brand-title-wrap" style={{ textAlign: "center", minWidth: 0 }}>
           <div className="brand-title" style={{ fontWeight: 900, fontSize: 21, color: "#fff", letterSpacing: "-.3px" }}>
             دستیار حقوقی هوشمند کارگر
           </div>

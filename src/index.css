@@ -300,10 +300,20 @@ button {
   justify-content: center;
   gap: 15px;
 }
+.brand-title-wrap {
+  min-width: 0;
+  max-width: 100%;
+}
+.brand-title,
+.brand-subtitle {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .brand-utility-cluster {
   position: absolute;
   top: 50%;
-  left: 26px;
+  right: 26px;
   transform: translateY(-50%);
   display: flex;
   align-items: center;
@@ -313,10 +323,11 @@ button {
 @media (max-width: 720px) {
   .brand-header-inner {
     padding: 14px 16px;
+    padding-right: 140px;
     gap: 10px;
   }
   .brand-utility-cluster {
-    left: 12px;
+    right: 12px;
     gap: 6px;
   }
   .brand-title {
