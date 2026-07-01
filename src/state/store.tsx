@@ -40,6 +40,7 @@ interface State {
   faqOpen: Record<string, boolean>;
   form: FormState;
   sidebarOpen: boolean;
+  pdfGenerating: boolean;
 }
 
 const GREETING =
@@ -77,6 +78,7 @@ function initialState(): State {
       notes: "",
     },
     sidebarOpen: false,
+    pdfGenerating: false,
   };
 }
 
@@ -98,6 +100,7 @@ function useProvideAppState() {
   const phoneRef = useRef<HTMLInputElement>(null);
   const codeRef = useRef<HTMLInputElement>(null);
   const supportRef = useRef<HTMLTextAreaElement>(null);
+  const docRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const t = window.setTimeout(() => phoneRef.current?.focus(), 150);
@@ -479,8 +482,39 @@ function useProvideAppState() {
     setState((s) => ({ ...s, form: { ...s.form, notes: v } }));
   }
 
-  function download() {
-    showToast("فایل PDF سند دانلود شد ✓");
+  async function download() {
+    const el = docRef.current;
+    if (!el || state.pdfGenerating) return;
+    update({ pdfGenerating: true });
+    try {
+      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+        import("html2canvas"),
+        import("jspdf"),
+      ]);
+      const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
+      const imgData = canvas.toDataURL("image/jpeg", 0.93);
+      const pdf = new jsPDF({ unit: "pt", format: "a4" });
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pageWidth;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+      pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+      while (heightLeft > 0) {
+        position -= pageHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+      pdf.save(`${state.form.docType || "دادخواست"}.pdf`);
+      showToast("فایل PDF سند دانلود شد ✓");
+    } catch {
+      showToast("ساخت PDF با خطا مواجه شد — از گزینهٔ «چاپ» استفاده کن");
+    } finally {
+      update({ pdfGenerating: false });
+    }
   }
   function printDoc() {
     window.print();
@@ -491,7 +525,7 @@ function useProvideAppState() {
 
   return {
     state,
-    refs: { inputRef, scrollRef, nameRef, phoneRef, codeRef, supportRef },
+    refs: { inputRef, scrollRef, nameRef, phoneRef, codeRef, supportRef, docRef },
     actions: {
       submitText,
       onKey,

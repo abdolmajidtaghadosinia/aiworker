@@ -1,4 +1,5 @@
 import { profileNameFromPhone, useApp } from "../state/store";
+import { todayJalali } from "../lib/format";
 
 export function AccountPage() {
   const { state, actions } = useApp();
@@ -34,7 +35,7 @@ export function AccountPage() {
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", fontSize: "13.5px", borderBottom: "1px solid #f1f3f8" }}>
           <span style={{ color: "#6c7689" }}>تاریخ عضویت</span>
-          <span style={{ fontWeight: 600, color: "#27365a" }}>۱۴۰۵/۰۴/۱۰</span>
+          <span style={{ fontWeight: 600, color: "#27365a" }}>{todayJalali()}</span>
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", fontSize: "13.5px", borderBottom: "1px solid #f1f3f8" }}>
           <span style={{ color: "#6c7689" }}>نوع حساب</span>

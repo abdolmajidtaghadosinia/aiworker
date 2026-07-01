@@ -67,3 +67,13 @@ export function formatPhone(d: string): string {
   const parts = d.length === 11 ? [d.slice(0, 4), d.slice(4, 7), d.slice(7)] : [d];
   return toFaDigits(parts.join(" "));
 }
+
+export function todayJalali(): string {
+  const parts = new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  return toFaDigits(`${get("year")}/${get("month")}/${get("day")}`);
+}

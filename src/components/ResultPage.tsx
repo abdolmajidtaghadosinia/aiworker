@@ -1,11 +1,11 @@
 import { useApp } from "../state/store";
 import { build } from "../lib/calc";
-import { fa, toNum } from "../lib/format";
+import { fa, toNum, todayJalali } from "../lib/format";
 import { CLAIM_LABEL } from "../lib/data";
 import { ArrowRightIcon } from "./icons";
 
 export function ResultPage() {
-  const { state, actions } = useApp();
+  const { state, actions, refs } = useApp();
   const d = state.data;
   const f = state.form;
 
@@ -71,16 +71,28 @@ export function ResultPage() {
           </button>
           <button
             onClick={actions.download}
+            disabled={state.pdfGenerating}
             className="hover-brighten-soft"
-            style={{ background: "linear-gradient(135deg,#e6b450,#cf9a32)", border: "none", borderRadius: 11, padding: "11px 20px", fontSize: 14, fontWeight: 800, color: "#3a2a06", cursor: "pointer", boxShadow: "0 6px 16px rgba(207,154,50,.26)" }}
+            style={{
+              background: "linear-gradient(135deg,#e6b450,#cf9a32)",
+              border: "none",
+              borderRadius: 11,
+              padding: "11px 20px",
+              fontSize: 14,
+              fontWeight: 800,
+              color: "#3a2a06",
+              cursor: state.pdfGenerating ? "default" : "pointer",
+              opacity: state.pdfGenerating ? 0.7 : 1,
+              boxShadow: "0 6px 16px rgba(207,154,50,.26)",
+            }}
           >
-            دانلود PDF
+            {state.pdfGenerating ? "در حال ساخت PDF…" : "دانلود PDF"}
           </button>
         </div>
       </div>
 
       <div className="result-grid">
-        <div className="result-doc-paper" style={{ background: "#fff", border: "1px solid #e3e8f1", borderRadius: 10, boxShadow: "0 6px 28px rgba(20,40,80,.09)", lineHeight: 2.05, fontSize: 15, color: "#1d2b3f" }}>
+        <div ref={refs.docRef} className="result-doc-paper" style={{ background: "#fff", border: "1px solid #e3e8f1", borderRadius: 10, boxShadow: "0 6px 28px rgba(20,40,80,.09)", lineHeight: 2.05, fontSize: 15, color: "#1d2b3f" }}>
           <div style={{ textAlign: "center", fontSize: 13, color: "#6c7689", marginBottom: 16 }}>بسمه تعالی</div>
           <div style={{ textAlign: "center", fontWeight: 800, fontSize: 19, lineHeight: 1.6, marginBottom: 6, color: "#13265c" }}>
             {docTitle}
@@ -89,7 +101,7 @@ export function ResultPage() {
           </div>
           <div style={{ height: 3, width: 90, background: "linear-gradient(90deg,#e6b450,#cf9a32)", borderRadius: 2, margin: "12px auto 18px" }}></div>
           <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12.5px", color: "#9aa3b6", borderBottom: "2px solid #13265c", paddingBottom: 14, marginBottom: 18 }}>
-            <span>تاریخ تنظیم: ۱۴۰۵/۰۳/۳۱</span>
+            <span>تاریخ تنظیم: {todayJalali()}</span>
             <span>شمارهٔ پرونده: (پس از ثبت تخصیص می‌یابد)</span>
           </div>
 
