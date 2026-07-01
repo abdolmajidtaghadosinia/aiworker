@@ -60,6 +60,9 @@ export interface FormState {
   dismissalDate: string | null;
   insurancePeriod: string | null;
   noticeDeadlineDays: string | null;
+  married: string | null;
+  dependents: string | null;
+  insuranceYears: string | null;
 }
 
 export interface ClaimItem {
@@ -90,4 +93,11 @@ export interface LawInfo {
   n: string;
   t: string;
   d: string;
+}
+
+export interface EduTopic {
+  id: string;
+  title: string;
+  summary: string;
+  body: string[];
 }

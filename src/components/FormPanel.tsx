@@ -56,6 +56,8 @@ export function FormPanel() {
             <option>{DOC_TYPE.DISMISSAL}</option>
             <option>{DOC_TYPE.INSURANCE}</option>
             <option>{DOC_TYPE.NOTICE}</option>
+            <option>{DOC_TYPE.DEFENSE_BRIEF}</option>
+            <option>{DOC_TYPE.UNEMPLOYMENT}</option>
           </select>
         </div>
         <div>
@@ -103,12 +105,14 @@ export function FormPanel() {
           />
         </div>
         <div>
-          <label style={{ fontSize: "12.5px", fontWeight: 700, color: "#41506b", marginBottom: 6, display: "block" }}>مبلغ مطالبه (تومان)</label>
+          <label style={{ fontSize: "12.5px", fontWeight: 700, color: "#41506b", marginBottom: 6, display: "block" }}>
+            {f.docType === DOC_TYPE.UNEMPLOYMENT ? "آخرین حقوق ماهانه (تومان)" : "مبلغ مطالبه (تومان)"}
+          </label>
           <input
             type="text"
             value={amountVal}
             onChange={actions.onAmount}
-            placeholder="مبلغ را وارد کنید"
+            placeholder={f.docType === DOC_TYPE.UNEMPLOYMENT ? "مثلاً: ۱۲۰۰۰۰۰۰" : "مبلغ را وارد کنید"}
             className="focus-border"
             style={{
               width: "100%",
@@ -172,6 +176,40 @@ export function FormPanel() {
             className="focus-border"
             style={fieldInputStyle}
           />
+        </div>
+      )}
+
+      {f.docType === DOC_TYPE.UNEMPLOYMENT && (
+        <div className="form-two-col-grid" style={{ marginTop: 14 }}>
+          <div>
+            <label style={fieldLabelStyle}>سابقهٔ پرداخت بیمه (سال)</label>
+            <input
+              type="text"
+              value={f.insuranceYears || ""}
+              onChange={actions.onInsuranceYears}
+              placeholder="مثلاً: ۶"
+              className="focus-border"
+              style={fieldInputStyle}
+            />
+          </div>
+          <div>
+            <label style={fieldLabelStyle}>وضعیت تأهل</label>
+            <select value={f.married || "مجرد"} onChange={actions.onMarried} className="focus-border" style={{ ...fieldInputStyle, cursor: "pointer" }}>
+              <option>مجرد</option>
+              <option>متأهل</option>
+            </select>
+          </div>
+          <div>
+            <label style={fieldLabelStyle}>تعداد افراد تحت تکفل</label>
+            <input
+              type="text"
+              value={f.dependents || ""}
+              onChange={actions.onDependents}
+              placeholder="۰"
+              className="focus-border"
+              style={fieldInputStyle}
+            />
+          </div>
         </div>
       )}
 

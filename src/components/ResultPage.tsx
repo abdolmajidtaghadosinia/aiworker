@@ -1,5 +1,6 @@
 import { useApp } from "../state/store";
 import { build } from "../lib/calc";
+import { calcUnemploymentInsurance } from "../lib/insurance";
 import { fa, toNum, todayJalali } from "../lib/format";
 import { CLAIM_LABEL, DOC_TYPE } from "../lib/data";
 import { buildDocumentContent } from "../lib/doc";
@@ -18,18 +19,36 @@ export function ResultPage() {
   const amountVal = f.amount === null ? (preview ? fa(preview.total) : "") : f.amount;
   const nameVal = f.name === null ? d.name || "" : f.name;
 
-  const usingChatCalc = built.items.length > 0;
-  const finalTotalNum = usingChatCalc ? built.total : toNum(amountVal);
-  const finalItems = usingChatCalc
-    ? docItemsChat
-    : toNum(amountVal) > 0
-      ? [{ t: f.docType || "مطالبات کارگری", sub: "مبلغ ثبت‌شده از طریق فرم مستقیم", amtfa: `${fa(toNum(amountVal))} تومان` }]
-      : [];
   const finalName = d.name && d.name.trim() ? d.name : nameVal || "—";
   const finalEmployer = d.employer && d.employer.trim() ? d.employer : employerVal || "—";
   const hasDetailed = !!(d.years && toNum(d.salary));
 
   const docType = f.docType || DOC_TYPE.PETITION;
+  const isUnemployment = docType === DOC_TYPE.UNEMPLOYMENT;
+
+  const married = f.married === "متأهل";
+  const dependents = toNum(f.dependents);
+  const salaryForUnemployment = hasDetailed ? toNum(d.salary) : toNum(amountVal);
+  const insuranceYears = hasDetailed ? Number(d.years) || 0 : toNum(f.insuranceYears);
+  const unemployment =
+    isUnemployment && salaryForUnemployment > 0
+      ? calcUnemploymentInsurance(salaryForUnemployment, insuranceYears, married, dependents)
+      : null;
+
+  const usingChatCalc = built.items.length > 0;
+  const finalTotalNum = isUnemployment ? unemployment?.total ?? 0 : usingChatCalc ? built.total : toNum(amountVal);
+  const finalItems = isUnemployment
+    ? unemployment
+      ? [
+          { t: "مقرری ماهانهٔ برآوردی", sub: `معادل ${unemployment.percent}٪ متوسط مزد`, amtfa: `${fa(unemployment.monthlyAmount)} تومان` },
+          { t: "مدت برآوردی پرداخت مقرری", sub: "بر اساس سابقهٔ بیمه و وضعیت تأهل", amtfa: `${fa(unemployment.months)} ماه` },
+        ]
+      : []
+    : usingChatCalc
+      ? docItemsChat
+      : toNum(amountVal) > 0
+        ? [{ t: f.docType || "مطالبات کارگری", sub: "مبلغ ثبت‌شده از طریق فرم مستقیم", amtfa: `${fa(toNum(amountVal))} تومان` }]
+        : [];
   const docTotalFa = `${fa(finalTotalNum)} تومان`;
   const claimsList = (d.claims || []).map((x) => CLAIM_LABEL[x]).filter(Boolean).join("، ") || "حقوق و مزایای قانونی";
 
@@ -43,10 +62,13 @@ export function ResultPage() {
     hasDetailed,
     claimsList,
     totalFa: docTotalFa,
-    hasClaims: finalTotalNum > 0,
+    hasClaims: !isUnemployment && finalTotalNum > 0,
     dismissalDate: f.dismissalDate,
     insurancePeriod: f.insurancePeriod,
     noticeDeadlineDays: f.noticeDeadlineDays,
+    married,
+    dependents,
+    unemployment,
   });
 
   return (
@@ -138,7 +160,7 @@ export function ResultPage() {
               </div>
             ))}
             <div style={{ display: "flex", justifyContent: "space-between", gap: 14, padding: "15px 16px", background: "#fbf3e0" }}>
-              <div style={{ fontWeight: 800, fontSize: 15, color: "#b9842b" }}>جمع کل مطالبات</div>
+              <div style={{ fontWeight: 800, fontSize: 15, color: "#b9842b" }}>{isUnemployment ? "جمع کل برآوردی مقرری" : "جمع کل مطالبات"}</div>
               <div style={{ fontWeight: 800, fontSize: 16, color: "#b9842b", whiteSpace: "nowrap" }}>{docTotalFa}</div>
             </div>
           </div>
@@ -172,7 +194,11 @@ export function ResultPage() {
                 ? `اگر کارفرما ظرف مهلت مقرر در اظهارنامه پاسخ ندهد، می‌تونی مستقیم دادخواست را در هیأت تشخیص ادارهٔ کار ثبت کنی.`
                 : docType === DOC_TYPE.DISMISSAL
                   ? "برای اعتراض به رأی هیأت تشخیص، فقط ۱۵ روز از تاریخ ابلاغ رأی فرصت داری؛ هرچه زودتر اقدام کن."
-                  : "هرچه زودتر دادخواست رو ثبت کنی، حقت بهتر حفظ می‌شه. پروندهٔ مطالبات در هیأت تشخیص ادارهٔ کار رسیدگی می‌شود."}
+                  : docType === DOC_TYPE.DEFENSE_BRIEF
+                    ? "لایحه رو حتماً پیش از جلسهٔ رسیدگی هیأت تقدیم کن تا در پرونده لحاظ بشه."
+                    : docType === DOC_TYPE.UNEMPLOYMENT
+                      ? "درخواست مقرری بیمهٔ بیکاری باید حداکثر ظرف ۳۰ روز از تاریخ بیکاری به ادارهٔ کار تسلیم بشه."
+                      : "هرچه زودتر دادخواست رو ثبت کنی، حقت بهتر حفظ می‌شه. پروندهٔ مطالبات در هیأت تشخیص ادارهٔ کار رسیدگی می‌شود."}
             </div>
           </div>
           <div style={{ background: "#fff", border: "1px solid #e3e8f1", borderRadius: 14, padding: 16 }}>

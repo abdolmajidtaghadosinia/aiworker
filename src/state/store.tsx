@@ -79,10 +79,60 @@ function initialState(): State {
       dismissalDate: null,
       insurancePeriod: null,
       noticeDeadlineDays: null,
+      married: null,
+      dependents: null,
+      insuranceYears: null,
     },
     sidebarOpen: false,
     pdfGenerating: false,
   };
+}
+
+const STORAGE_KEY = "aiworker.state.v1";
+
+const PERSISTED_KEYS = [
+  "screen",
+  "authPhone",
+  "messages",
+  "step",
+  "data",
+  "pendingMulti",
+  "ready",
+  "activeTab",
+  "faqQuery",
+  "faqCategory",
+  "faqOpen",
+  "form",
+] as const satisfies readonly (keyof State)[];
+
+function loadPersisted(): Partial<State> | null {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function savePersisted(state: State) {
+  try {
+    const toSave: Partial<State> = {};
+    for (const key of PERSISTED_KEYS) {
+      (toSave as Record<string, unknown>)[key] = state[key];
+    }
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+  } catch {
+    // ignore quota/serialization errors — persistence is a best-effort convenience
+  }
+}
+
+function hydrateState(): State {
+  const base = initialState();
+  const saved = loadPersisted();
+  if (!saved) return base;
+  return { ...base, ...saved, form: { ...base.form, ...(saved.form || {}) } };
 }
 
 export function profileNameFromPhone(phone: string): string {
@@ -93,9 +143,13 @@ export function profileNameFromPhone(phone: string): string {
 }
 
 function useProvideAppState() {
-  const [state, setState] = useState<State>(initialState);
+  const [state, setState] = useState<State>(hydrateState);
   const cdTimer = useRef<number | undefined>(undefined);
   const toastTimer = useRef<number | undefined>(undefined);
+
+  useEffect(() => {
+    savePersisted(state);
+  }, [state]);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -455,7 +509,12 @@ function useProvideAppState() {
   }
   function logout() {
     if (cdTimer.current) window.clearInterval(cdTimer.current);
-    update({ screen: "auth", authStep: "phone", authPhone: "", authCode: "", authError: null, sidebarOpen: false });
+    try {
+      window.localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // ignore
+    }
+    setState(initialState());
   }
   function toggleSidebar() {
     update({ sidebarOpen: !state.sidebarOpen });
@@ -502,6 +561,18 @@ function useProvideAppState() {
   function onNoticeDeadlineDays(e: React.ChangeEvent<HTMLInputElement>) {
     const v = e.target.value;
     setState((s) => ({ ...s, form: { ...s.form, noticeDeadlineDays: v } }));
+  }
+  function onMarried(e: React.ChangeEvent<HTMLSelectElement>) {
+    const v = e.target.value;
+    setState((s) => ({ ...s, form: { ...s.form, married: v } }));
+  }
+  function onDependents(e: React.ChangeEvent<HTMLInputElement>) {
+    const v = e.target.value;
+    setState((s) => ({ ...s, form: { ...s.form, dependents: v } }));
+  }
+  function onInsuranceYears(e: React.ChangeEvent<HTMLInputElement>) {
+    const v = e.target.value;
+    setState((s) => ({ ...s, form: { ...s.form, insuranceYears: v } }));
   }
 
   async function download() {
@@ -591,6 +662,9 @@ function useProvideAppState() {
       onDismissalDate,
       onInsurancePeriod,
       onNoticeDeadlineDays,
+      onMarried,
+      onDependents,
+      onInsuranceYears,
       download,
       printDoc,
       sendExpert,
