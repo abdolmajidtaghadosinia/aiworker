@@ -57,6 +57,9 @@ export interface FormState {
   employer: string | null;
   amount: string | null;
   notes: string;
+  dismissalDate: string | null;
+  insurancePeriod: string | null;
+  noticeDeadlineDays: string | null;
 }
 
 export interface ClaimItem {

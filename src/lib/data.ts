@@ -9,6 +9,13 @@ import type {
 
 export const DEMO_CODE = "1234";
 
+export const DOC_TYPE = {
+  PETITION: "دادخواست مطالبهٔ حقوق",
+  DISMISSAL: "اعتراض به اخراج",
+  INSURANCE: "شکایت‌نامهٔ تأمین اجتماعی",
+  NOTICE: "اظهارنامهٔ مطالباتی",
+} as const;
+
 export const QUESTIONS: Question[] = [
   {
     field: "name",
@@ -186,19 +193,19 @@ export const FAQ_DATA: FaqEntry[] = [
 
 export const DOC_TYPES_DATA: DocTypeInfo[] = [
   {
-    t: "دادخواست مطالبهٔ حقوق",
+    t: DOC_TYPE.PETITION,
     d: "برای مطالبهٔ حقوق، سنوات، عیدی و سایر مزایای پرداخت‌نشده",
   },
   {
-    t: "اعتراض به اخراج",
+    t: DOC_TYPE.DISMISSAL,
     d: "برای اعتراض به اخراج غیرقانونی و درخواست بازگشت به کار یا غرامت",
   },
   {
-    t: "شکایت‌نامهٔ تأمین اجتماعی",
+    t: DOC_TYPE.INSURANCE,
     d: "برای پیگیری کسری بیمه یا عدم واریز حق بیمه توسط کارفرما",
   },
   {
-    t: "اظهارنامهٔ مطالباتی",
+    t: DOC_TYPE.NOTICE,
     d: "برای اخطار رسمی به کارفرما پیش از طرح شکایت در ادارهٔ کار",
   },
 ];

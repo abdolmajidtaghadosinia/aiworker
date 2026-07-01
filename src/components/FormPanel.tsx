@@ -1,7 +1,20 @@
 import { useApp } from "../state/store";
 import { build } from "../lib/calc";
 import { fa, toNum } from "../lib/format";
+import { DOC_TYPE } from "../lib/data";
 import { SparkleIcon } from "./icons";
+
+const fieldLabelStyle = { fontSize: "12.5px", fontWeight: 700, color: "#41506b", marginBottom: 6, display: "block" } as const;
+const fieldInputStyle = {
+  width: "100%",
+  border: "1.5px solid #d6deec",
+  borderRadius: 11,
+  padding: "11px 12px",
+  fontSize: 14,
+  background: "#fafbfe",
+  color: "#15233f",
+  outline: "none",
+} as const;
 
 export function FormPanel() {
   const { state, refs, actions } = useApp();
@@ -39,10 +52,10 @@ export function FormPanel() {
               cursor: "pointer",
             }}
           >
-            <option>دادخواست مطالبهٔ حقوق</option>
-            <option>اعتراض به اخراج</option>
-            <option>شکایت‌نامهٔ تأمین اجتماعی</option>
-            <option>اظهارنامهٔ مطالباتی</option>
+            <option>{DOC_TYPE.PETITION}</option>
+            <option>{DOC_TYPE.DISMISSAL}</option>
+            <option>{DOC_TYPE.INSURANCE}</option>
+            <option>{DOC_TYPE.NOTICE}</option>
           </select>
         </div>
         <div>
@@ -117,6 +130,48 @@ export function FormPanel() {
       ) : (
         <div style={{ fontSize: "11.5px", color: "#9aa3b6", marginTop: 7, lineHeight: 1.7 }}>
           یا با تکمیل گفتگو، این مبلغ خودکار محاسبه می‌شود.
+        </div>
+      )}
+
+      {f.docType === DOC_TYPE.DISMISSAL && (
+        <div style={{ marginTop: 14 }}>
+          <label style={fieldLabelStyle}>تاریخ اخراج</label>
+          <input
+            type="text"
+            value={f.dismissalDate || ""}
+            onChange={actions.onDismissalDate}
+            placeholder="مثلاً: ۱۴۰۵/۰۲/۱۵"
+            className="focus-border"
+            style={fieldInputStyle}
+          />
+        </div>
+      )}
+
+      {f.docType === DOC_TYPE.INSURANCE && (
+        <div style={{ marginTop: 14 }}>
+          <label style={fieldLabelStyle}>بازهٔ عدم واریز حق بیمه</label>
+          <input
+            type="text"
+            value={f.insurancePeriod || ""}
+            onChange={actions.onInsurancePeriod}
+            placeholder="مثلاً: مهر تا اسفند ۱۴۰۴"
+            className="focus-border"
+            style={fieldInputStyle}
+          />
+        </div>
+      )}
+
+      {f.docType === DOC_TYPE.NOTICE && (
+        <div style={{ marginTop: 14 }}>
+          <label style={fieldLabelStyle}>مهلت پرداخت (روز)</label>
+          <input
+            type="text"
+            value={f.noticeDeadlineDays || ""}
+            onChange={actions.onNoticeDeadlineDays}
+            placeholder="۱۰"
+            className="focus-border"
+            style={fieldInputStyle}
+          />
         </div>
       )}
 

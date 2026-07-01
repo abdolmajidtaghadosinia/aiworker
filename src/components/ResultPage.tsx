@@ -1,7 +1,8 @@
 import { useApp } from "../state/store";
 import { build } from "../lib/calc";
 import { fa, toNum, todayJalali } from "../lib/format";
-import { CLAIM_LABEL } from "../lib/data";
+import { CLAIM_LABEL, DOC_TYPE } from "../lib/data";
+import { buildDocumentContent } from "../lib/doc";
 import { ArrowRightIcon } from "./icons";
 
 export function ResultPage() {
@@ -10,14 +11,6 @@ export function ResultPage() {
   const f = state.form;
 
   const built = build(d);
-  const c = d.claims || [];
-  const articlesChat: string[] = [];
-  if (c.includes("sanavat")) articlesChat.push("مادهٔ ۲۴ قانون کار — مزایای پایان کار و سنوات خدمت");
-  if (c.includes("eidi")) articlesChat.push("قانون عیدی و پاداش کارگران، مصوب ۱۳۷۰");
-  if (c.includes("morakhasi")) articlesChat.push("مادهٔ ۶۴ قانون کار — مرخصی استحقاقی سالانه");
-  if (c.includes("ezafe")) articlesChat.push("مادهٔ ۵۹ قانون کار — فوق‌العادهٔ اضافه‌کاری");
-  if (c.includes("maoq")) articlesChat.push("مادهٔ ۳۷ قانون کار — موعد پرداخت مزد");
-  articlesChat.push("مادهٔ ۱۵۷ قانون کار — رسیدگی در هیأت تشخیص");
   const docItemsChat = built.items.map((it) => ({ t: it.t, sub: it.sub, amtfa: `${fa(it.amt)} تومان` }));
 
   const preview = toNum(d.salary) && d.claims && d.claims.length ? build(d) : null;
@@ -32,16 +25,29 @@ export function ResultPage() {
     : toNum(amountVal) > 0
       ? [{ t: f.docType || "مطالبات کارگری", sub: "مبلغ ثبت‌شده از طریق فرم مستقیم", amtfa: `${fa(toNum(amountVal))} تومان` }]
       : [];
-  const finalArticles = usingChatCalc
-    ? articlesChat
-    : ["مستند به قانون کار جمهوری اسلامی ایران و مقررات تأمین اجتماعی", "مادهٔ ۱۵۷ قانون کار — رسیدگی در هیأت تشخیص ادارهٔ کار"];
   const finalName = d.name && d.name.trim() ? d.name : nameVal || "—";
   const finalEmployer = d.employer && d.employer.trim() ? d.employer : employerVal || "—";
   const hasDetailed = !!(d.years && toNum(d.salary));
 
-  const docTitle = f.docType || "دادخواست";
+  const docType = f.docType || DOC_TYPE.PETITION;
   const docTotalFa = `${fa(finalTotalNum)} تومان`;
   const claimsList = (d.claims || []).map((x) => CLAIM_LABEL[x]).filter(Boolean).join("، ") || "حقوق و مزایای قانونی";
+
+  const dc = buildDocumentContent({
+    docType,
+    name: finalName,
+    employer: finalEmployer,
+    yearsFa: fa(Number(d.years) || 0),
+    salaryFa: fa(toNum(d.salary)),
+    contract: d.contract || "—",
+    hasDetailed,
+    claimsList,
+    totalFa: docTotalFa,
+    hasClaims: finalTotalNum > 0,
+    dismissalDate: f.dismissalDate,
+    insurancePeriod: f.insurancePeriod,
+    noticeDeadlineDays: f.noticeDeadlineDays,
+  });
 
   return (
     <div className="result-page-wrap" style={{ maxWidth: 1180, margin: "0 auto", padding: "24px 26px 60px" }}>
@@ -95,9 +101,9 @@ export function ResultPage() {
         <div ref={refs.docRef} className="result-doc-paper" style={{ background: "#fff", border: "1px solid #e3e8f1", borderRadius: 10, boxShadow: "0 6px 28px rgba(20,40,80,.09)", lineHeight: 2.05, fontSize: 15, color: "#1d2b3f" }}>
           <div style={{ textAlign: "center", fontSize: 13, color: "#6c7689", marginBottom: 16 }}>بسمه تعالی</div>
           <div style={{ textAlign: "center", fontWeight: 800, fontSize: 19, lineHeight: 1.6, marginBottom: 6, color: "#13265c" }}>
-            {docTitle}
+            {dc.recipientTitle}
             <br />
-            ادارهٔ تعاون، کار و رفاه اجتماعی
+            {dc.recipientSub}
           </div>
           <div style={{ height: 3, width: 90, background: "linear-gradient(90deg,#e6b450,#cf9a32)", borderRadius: 2, margin: "12px auto 18px" }}></div>
           <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12.5px", color: "#9aa3b6", borderBottom: "2px solid #13265c", paddingBottom: 14, marginBottom: 18 }}>
@@ -107,31 +113,20 @@ export function ResultPage() {
 
           <div style={{ display: "flex", flexDirection: "column", gap: 7, marginBottom: 20, fontSize: "14.5px" }}>
             <div>
-              <strong style={{ display: "inline-block", minWidth: 130, color: "#1d3b8b" }}>خواهان (شاکی):</strong> {finalName} — کارگر
+              <strong style={{ display: "inline-block", minWidth: 150, color: "#1d3b8b" }}>{dc.plaintiffLabel}:</strong> {finalName} — کارگر
             </div>
             <div>
-              <strong style={{ display: "inline-block", minWidth: 130, color: "#1d3b8b" }}>خوانده (طرف شکایت):</strong> {finalEmployer} — کارفرما
+              <strong style={{ display: "inline-block", minWidth: 150, color: "#1d3b8b" }}>{dc.defendantLabel}:</strong> {finalEmployer} — کارفرما
             </div>
             <div>
-              <strong style={{ display: "inline-block", minWidth: 130, color: "#1d3b8b" }}>موضوع:</strong> مطالبهٔ {claimsList}
+              <strong style={{ display: "inline-block", minWidth: 150, color: "#1d3b8b" }}>موضوع:</strong> {dc.subject}
             </div>
           </div>
 
-          <div style={{ fontWeight: 800, fontSize: "15.5px", marginBottom: 8, color: "#1d3b8b" }}>شرح دادخواست</div>
-          {hasDetailed ? (
-            <p style={{ margin: "0 0 16px", textAlign: "justify" }}>
-              ریاست محترم ادارهٔ تعاون، کار و رفاه اجتماعی؛ احتراماً اینجانب <strong>{finalName}</strong> به مدت حدود <strong>{fa(Number(d.years) || 0)} سال</strong> در واحد «{finalEmployer}» با
-              قرارداد {d.contract || "—"} مشغول به کار بوده‌ام و آخرین مزد ماهانهٔ اینجانب مبلغ <strong>{fa(toNum(d.salary))} تومان</strong> بوده است. متأسفانه کارفرما تا کنون از پرداخت حقوق و
-              مزایای قانونی ذیل خودداری نموده است. لذا مستند به مواد قانون کار، رسیدگی و صدور رأی مبنی بر محکومیت خوانده به پرداخت مطالبات زیر مورد استدعاست.
-            </p>
-          ) : (
-            <p style={{ margin: "0 0 16px", textAlign: "justify" }}>
-              ریاست محترم ادارهٔ تعاون، کار و رفاه اجتماعی؛ احتراماً اینجانب <strong>{finalName}</strong> از کارفرمای خود «{finalEmployer}» به دلیل عدم پرداخت مطالبات قانونی متحمل خسارت
-              شده‌ام. لذا مستند به قانون کار، رسیدگی و صدور رأی مبنی بر محکومیت خوانده به پرداخت مطالبات زیر مورد استدعاست.
-            </p>
-          )}
+          <div style={{ fontWeight: 800, fontSize: "15.5px", marginBottom: 8, color: "#1d3b8b" }}>شرح {docType}</div>
+          <p style={{ margin: "0 0 16px", textAlign: "justify" }}>{dc.body}</p>
 
-          <div style={{ fontWeight: 800, fontSize: "15.5px", margin: "22px 0 10px", color: "#1d3b8b" }}>جدول مطالبات</div>
+          <div style={{ fontWeight: 800, fontSize: "15.5px", margin: "22px 0 10px", color: "#1d3b8b" }}>{dc.tableTitle}</div>
           <div style={{ border: "1px solid #e3e8f1", borderRadius: 8, overflow: "hidden" }}>
             {finalItems.map((it, i) => (
               <div key={i} style={{ display: "flex", justifyContent: "space-between", gap: 14, padding: "13px 16px", borderBottom: "1px solid #eef1f7" }}>
@@ -150,7 +145,7 @@ export function ResultPage() {
 
           <div style={{ fontWeight: 800, fontSize: "15.5px", margin: "22px 0 10px", color: "#1d3b8b" }}>مستندات قانونی</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-            {finalArticles.map((a, i) => (
+            {dc.articles.map((a, i) => (
               <div key={i} style={{ display: "flex", gap: 9, alignItems: "flex-start", fontSize: 14 }}>
                 <span style={{ color: "#cf9a32", fontWeight: 800, flex: "none" }}>•</span>
                 <span>{a}</span>
@@ -159,13 +154,11 @@ export function ResultPage() {
           </div>
 
           <div style={{ fontWeight: 800, fontSize: "15.5px", margin: "22px 0 8px", color: "#1d3b8b" }}>خواستهٔ نهایی</div>
-          <p style={{ margin: "0 0 28px", textAlign: "justify" }}>
-            با عنایت به مراتب فوق، صدور حکم به محکومیت خوانده به پرداخت مجموع مبلغ <strong>{docTotalFa}</strong> به انضمام خسارات و حقوق قانونی متعلقه، از آن مرجع محترم مورد استدعاست.
-          </p>
+          <p style={{ margin: "0 0 28px", textAlign: "justify" }}>{dc.finalRequest}</p>
 
           <div style={{ display: "flex", justifyContent: "space-between", marginTop: 34, fontSize: 14 }}>
             <div>
-              امضای خواهان: <strong>{finalName}</strong>
+              {dc.signatureLabel}: <strong>{finalName}</strong>
             </div>
             <div style={{ color: "#9aa3b6" }}>تاریخ و امضا: ......................</div>
           </div>
@@ -175,7 +168,11 @@ export function ResultPage() {
           <div style={{ background: "#fdf3e0", border: "1px solid #f1ddb8", borderRadius: 14, padding: 16 }}>
             <div style={{ fontWeight: 800, fontSize: "14.5px", color: "#b9842b", marginBottom: 7 }}>نکتهٔ مهم دربارهٔ مهلت</div>
             <div style={{ fontSize: 13, color: "#8a6a2b", lineHeight: 1.95 }}>
-              هرچه زودتر دادخواست رو ثبت کنی، حقت بهتر حفظ می‌شه. پروندهٔ مطالبات در هیأت تشخیص ادارهٔ کار رسیدگی می‌شود.
+              {docType === DOC_TYPE.NOTICE
+                ? `اگر کارفرما ظرف مهلت مقرر در اظهارنامه پاسخ ندهد، می‌تونی مستقیم دادخواست را در هیأت تشخیص ادارهٔ کار ثبت کنی.`
+                : docType === DOC_TYPE.DISMISSAL
+                  ? "برای اعتراض به رأی هیأت تشخیص، فقط ۱۵ روز از تاریخ ابلاغ رأی فرصت داری؛ هرچه زودتر اقدام کن."
+                  : "هرچه زودتر دادخواست رو ثبت کنی، حقت بهتر حفظ می‌شه. پروندهٔ مطالبات در هیأت تشخیص ادارهٔ کار رسیدگی می‌شود."}
             </div>
           </div>
           <div style={{ background: "#fff", border: "1px solid #e3e8f1", borderRadius: 14, padding: 16 }}>

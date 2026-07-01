@@ -14,7 +14,7 @@ import type {
   FormState,
   Screen,
 } from "../types";
-import { DEMO_CODE, FAQ_DATA, QUESTIONS } from "../lib/data";
+import { DEMO_CODE, DOC_TYPE, FAQ_DATA, QUESTIONS } from "../lib/data";
 import { build } from "../lib/calc";
 import { fa, normDigits, toNum } from "../lib/format";
 
@@ -71,11 +71,14 @@ function initialState(): State {
     faqCategory: "all",
     faqOpen: {},
     form: {
-      docType: "دادخواست مطالبهٔ حقوق",
+      docType: DOC_TYPE.PETITION,
       name: null,
       employer: null,
       amount: null,
       notes: "",
+      dismissalDate: null,
+      insurancePeriod: null,
+      noticeDeadlineDays: null,
     },
     sidebarOpen: false,
     pdfGenerating: false,
@@ -304,11 +307,18 @@ function useProvideAppState() {
     const d = state.data;
     const f = state.form;
     const nameOk = !!((d.name && d.name.trim()) || (f.name && f.name.trim()));
+    const employerOk = !!((d.employer && d.employer.trim()) || (f.employer && f.employer.trim()));
     const calcOk = toNum(d.salary) && (d.claims || []).length;
     const amountOk = toNum(f.amount) > 0;
-    const can = state.ready || !!calcOk || (nameOk && amountOk);
+    const needsAmount = f.docType !== DOC_TYPE.DISMISSAL && f.docType !== DOC_TYPE.INSURANCE;
+    const formOk = nameOk && (needsAmount ? amountOk : employerOk);
+    const can = state.ready || !!calcOk || formOk;
     if (!can) {
-      showToast("برای ساخت سند، «نام» و «مبلغ مطالبه» را وارد کن یا با دستیار گفتگو کن");
+      showToast(
+        needsAmount
+          ? "برای ساخت سند، «نام» و «مبلغ مطالبه» را وارد کن یا با دستیار گفتگو کن"
+          : "برای ساخت سند، «نام» و «نام کارفرما» را وارد کن یا با دستیار گفتگو کن",
+      );
       if (!nameOk) nameRef.current?.focus();
       return;
     }
@@ -481,6 +491,18 @@ function useProvideAppState() {
     const v = e.target.value;
     setState((s) => ({ ...s, form: { ...s.form, notes: v } }));
   }
+  function onDismissalDate(e: React.ChangeEvent<HTMLInputElement>) {
+    const v = e.target.value;
+    setState((s) => ({ ...s, form: { ...s.form, dismissalDate: v } }));
+  }
+  function onInsurancePeriod(e: React.ChangeEvent<HTMLInputElement>) {
+    const v = e.target.value;
+    setState((s) => ({ ...s, form: { ...s.form, insurancePeriod: v } }));
+  }
+  function onNoticeDeadlineDays(e: React.ChangeEvent<HTMLInputElement>) {
+    const v = e.target.value;
+    setState((s) => ({ ...s, form: { ...s.form, noticeDeadlineDays: v } }));
+  }
 
   async function download() {
     const el = docRef.current;
@@ -566,6 +588,9 @@ function useProvideAppState() {
       onEmployer,
       onAmount,
       onNotes,
+      onDismissalDate,
+      onInsurancePeriod,
+      onNoticeDeadlineDays,
       download,
       printDoc,
       sendExpert,
